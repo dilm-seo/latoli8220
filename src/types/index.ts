@@ -1,30 +1,40 @@
-export interface Signal {
+export type SignalType = 'BUY' | 'SELL';
+
+export type NewsSource = {
+  name: string;
+  tier: 1 | 2;
+  score: number;
+  url: string;
+  type: 'rss' | 'api';
+};
+
+export type NewsItem = {
+  title: string;
+  link: string;
+  pubDate: Date;
+  source: string;
+};
+
+export type CurrencyPair = {
+  symbol: string;
+  name: string;
+  weight: number;
+};
+
+export type AnalysisResult = {
   pair: string;
-  direction: 'buy' | 'sell';
+  sentiment: number;
   confidence: number;
-  reason: string;
-  timestamp: string;
-  source?: string;
-}
+  relevantNews: NewsItem[];
+};
 
-export interface Settings {
-  apiKey: string;
-  model: string;
-  maxSites: number;
-  maxDailyCost: number;
-  cacheTimeout: number;
-}
-
-export interface AppState {
-  signals: Signal[];
-  settings: Settings;
-  isScanning: boolean;
-  dailyApiCalls: number;
-  lastApiCall: string | null;
-  setSettings: (settings: Settings) => void;
-  addSignal: (signal: Signal) => void;
-  setIsScanning: (scanning: boolean) => void;
-  incrementApiCalls: () => void;
-  resetDailyApiCalls: () => void;
-  clearSignals: () => void;
-}
+export type ForexSignal = {
+  id: string;
+  pair: string;
+  type: SignalType;
+  confidence: number;
+  sources: NewsSource[];
+  timestamp: Date;
+  news: NewsItem[];
+  localAnalysis: AnalysisResult;
+};

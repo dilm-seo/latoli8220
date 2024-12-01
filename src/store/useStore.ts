@@ -1,38 +1,49 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ForexSignal, Settings } from '../types/forex';
+import type { ForexSignal } from '../types';
 
-interface State {
+interface AppState {
   signals: ForexSignal[];
-  settings: Settings;
   isScanning: boolean;
-  setSettings: (settings: Partial<Settings>) => void;
-  setSignals: (signals: ForexSignal[]) => void;
-  setIsScanning: (isScanning: boolean) => void;
+  apiKey: string | null;
+  budget: number;
+  maxSources: number;
+  dailyCost: number;
+  setApiKey: (key: string) => void;
+  setBudget: (budget: number) => void;
+  setMaxSources: (max: number) => void;
+  setDailyCost: (cost: number) => void;
+  addSignal: (signal: ForexSignal) => void;
+  clearSignals: () => void;
+  setScanning: (scanning: boolean) => void;
 }
 
-const defaultSettings: Settings = {
-  apiKey: '',
-  model: 'gpt-3.5-turbo',
-  maxSources: 5,
-  maxDailyCost: 5,
-};
-
-export const useStore = create<State>()(
+export const useStore = create<AppState>()(
   persist(
     (set) => ({
       signals: [],
-      settings: defaultSettings,
       isScanning: false,
-      setSettings: (newSettings) =>
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings },
-        })),
-      setSignals: (signals) => set({ signals }),
-      setIsScanning: (isScanning) => set({ isScanning }),
+      apiKey: null,
+      budget: 10,
+      maxSources: 5,
+      dailyCost: 0,
+      setApiKey: (key) => set({ apiKey: key }),
+      setBudget: (budget) => set({ budget }),
+      setMaxSources: (max) => set({ maxSources: max }),
+      setDailyCost: (cost) => set({ dailyCost: cost }),
+      addSignal: (signal) => set((state) => ({ 
+        signals: [signal, ...state.signals] 
+      })),
+      clearSignals: () => set({ signals: [] }),
+      setScanning: (scanning) => set({ isScanning: scanning }),
     }),
     {
       name: 'forex-analysis-storage',
+      partialize: (state) => ({
+        apiKey: state.apiKey,
+        budget: state.budget,
+        maxSources: state.maxSources,
+      }),
     }
   )
 );

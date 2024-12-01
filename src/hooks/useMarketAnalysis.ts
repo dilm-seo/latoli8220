@@ -1,92 +1,54 @@
-import { useState, useCallback } from 'react';
-import { Signal } from '../types';
-import { analyzeMarketNews } from '../utils/openai';
-import { APIKeyError, AnalysisError } from '../utils/errors';
-import { useStore } from '../store';
-import { 
-  loadSignalsCache, 
-  saveSignalsCache, 
-  updateLastScanTime, 
-  getLastScanTime 
-} from '../utils/storage';
+import { useState } from 'react';
+import { useStore } from '../store/useStore';
+import { fetchLatestNews } from '../services/newsService';
+import { analyzeMarketData } from '../services/openaiService';
 
-interface AnalysisState {
-  isScanning: boolean;
-  error: string | null;
-  scan: () => Promise<void>;
-}
-
-const MINUTE = 60 * 1000;
-
-export function useMarketAnalysis(): AnalysisState {
+export function useMarketAnalysis() {
   const { 
-    settings, 
-    setIsScanning, 
-    addSignal, 
-    dailyApiCalls,
-    incrementApiCalls,
-    clearSignals
+    apiKey, 
+    maxSources, 
+    budget, 
+    dailyCost,
+    setDailyCost,
+    addSignal,
+    setScanning 
   } = useStore();
   const [error, setError] = useState<string | null>(null);
 
-  const checkCacheValidity = useCallback(() => {
-    const lastScan = getLastScanTime();
-    if (!lastScan) return false;
-
-    const elapsed = Date.now() - lastScan;
-    return elapsed < settings.cacheTimeout * MINUTE;
-  }, [settings.cacheTimeout]);
-
-  const loadCache = useCallback(() => {
-    const cache = loadSignalsCache();
-    if (cache && cache.data.length > 0) {
-      clearSignals();
-      cache.data.forEach(addSignal);
-      return true;
+  const scanMarkets = async () => {
+    if (!apiKey) {
+      setError('Please set your OpenAI API key in settings');
+      return;
     }
-    return false;
-  }, [addSignal, clearSignals]);
 
-  const scan = async () => {
+    if (dailyCost >= budget) {
+      setError('Daily budget exceeded');
+      return;
+    }
+
     setError(null);
-    setIsScanning(true);
+    setScanning(true);
 
     try {
-      if (dailyApiCalls >= settings.maxDailyCost) {
-        throw new Error("Limite quotidienne d'appels API atteinte");
+      const news = await fetchLatestNews(maxSources);
+      
+      if (news.length === 0) {
+        throw new Error('No recent news available');
       }
 
-      if (checkCacheValidity() && loadCache()) {
-        setIsScanning(false);
-        return;
-      }
-
-      const signals = await analyzeMarketNews(settings.apiKey, settings.model);
+      const signal = await analyzeMarketData(apiKey, news);
       
-      clearSignals();
-      signals.forEach(addSignal);
+      // Estimate cost (this is a simplified calculation)
+      const estimatedCost = 0.002; // $0.002 per API call
+      setDailyCost(dailyCost + estimatedCost);
       
-      saveSignalsCache(signals);
-      updateLastScanTime();
-      incrementApiCalls();
-
+      addSignal(signal);
     } catch (err) {
-      if (err instanceof APIKeyError || err instanceof AnalysisError) {
-        setError(err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Une erreur inattendue s'est produite");
-        console.error(err);
-      }
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setIsScanning(false);
+      setScanning(false);
     }
   };
 
-  return {
-    isScanning: useStore(state => state.isScanning),
-    error,
-    scan
-  };
+  return { scanMarkets, error };
 }
