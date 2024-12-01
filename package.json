@@ -1,5 +1,5 @@
 {
-  "name": "forex-analysis-app",
+  "name": "forex-signals-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,18 +13,15 @@
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.2",
-    "date-fns": "^3.3.1",
     "openai": "^4.28.0",
-    "uuid": "^9.0.1",
-    "axios": "^1.6.7",
-    "rss-parser": "^3.13.0"
+    "react-router-dom": "^6.22.2",
+    "zustand": "^4.5.2",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
-    "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "eslint": "^9.9.1",
