@@ -1,71 +1,47 @@
 import React from 'react';
-import { Settings, ScanSearch } from 'lucide-react';
-import { useStore } from './store';
+import { Scanner } from './components/Scanner';
 import { SignalCard } from './components/SignalCard';
-import { SettingsModal } from './components/SettingsModal';
-import { EmptyState } from './components/EmptyState';
-import { useMarketAnalysis } from './hooks/useMarketAnalysis';
+import { Settings } from './components/Settings';
+import { useStore } from './store/useStore';
 
 function App() {
-  const signals = useStore(state => state.signals);
-  const [showSettings, setShowSettings] = React.useState(false);
-  const { isScanning, error, scan } = useMarketAnalysis();
+  const { signals } = useStore();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Signaux Forex IA
-            </h1>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 hover:bg-gray-100 rounded-full"
-            >
-              <Settings size={24} />
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <h1 className="text-2xl font-bold text-gray-900">Forex Analysis</h1>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex flex-col items-center">
-          <button
-            onClick={scan}
-            disabled={isScanning}
-            className={`
-              flex items-center px-6 py-3 rounded-lg text-white
-              ${isScanning 
-                ? 'bg-blue-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'}
-              transition-colors duration-200
-            `}
-          >
-            <ScanSearch size={20} className="mr-2" />
-            {isScanning ? 'Analyse en cours...' : 'Scanner les marchés'}
-          </button>
-          
-          {error && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
-              {error}
+      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="flex justify-center">
+              <Scanner />
             </div>
-          )}
-        </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {signals.length > 0 ? (
+                signals.map((signal) => (
+                  <SignalCard key={signal.id} signal={signal} />
+                ))
+              ) : (
+                <div className="md:col-span-2 text-center py-12">
+                  <p className="text-gray-500">
+                    No signals available. Click the Scan button to analyze the markets.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {signals.map((signal, index) => (
-            <SignalCard key={index} signal={signal} />
-          ))}
+          <div className="lg:col-span-1">
+            <Settings />
+          </div>
         </div>
-        
-        {signals.length === 0 && <EmptyState />}
       </main>
-
-      <SettingsModal 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
-      />
     </div>
   );
 }
